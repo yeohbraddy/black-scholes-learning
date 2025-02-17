@@ -1,36 +1,38 @@
 import numpy as np
 from scipy.stats import norm  # Needed for the cumulative distribution function (CDF)
 
-def black_scholes(S, K, T, r, sigma, option_type="call"):
-    """
-    Computes the Black-Scholes option price for European call/put options.
+def calculate_d1(S, K, T, r, sigma=0.2, q=0):
+    return np.log(S/K) + (r + 0.5*sigma**2)*T / sigma * np.sqrt(T)
 
-    Parameters:
-        S (float): Current stock price
-        K (float): Strike price
-        T (float): Time to expiration (in years)
-        r (float): Risk-free interest rate (as a decimal)
-        sigma (float): Volatility of the underlying asset (as a decimal)
-        option_type (str): "call" or "put"
-
-    Returns:
-        float: Option price
-    """
-    # Step 1: Compute d1
-    d1 = np.log(S/K) + (r + 0.5*sigma**2)*T / sigma * np.sqrt(T)
-
-    # Step 2: Compute d2
+def black_scholes(S, K, T, r, sigma, q=0):
+    d1 = calculate_d1(S, K, T, r, sigma, q)        
     d2 = d1 - sigma * np.sqrt(T)
 
-    # Step 3: Compute option price based on type
-    if option_type.lower() == "call":
-        price = S * norm.cdf(d1) - K*np.exp(-r*T)*norm.cdf(d2)
-    elif option_type.lower() == "put":
-        price = K*np.exp(-r*T)*norm.cdf(-d2)-S*norm.cdf(-d1)
-    else:
-        raise ValueError("option_type must be 'call' or 'put'")
+    call_price = S * norm.cdf(d1) - K*np.exp(-r*T)*norm.cdf(d2)
 
-    return price
+    return call_price
+
+def calculate_vega(S, K, T, r, sigma, q=0):
+    d1 = calculate_d1(S, K, T, r, sigma, q)
+
+    return S*np.exp(-q*T)*norm.pdf(d1)*np.sqrt(T)
+
+def implied_volatility(C_market, S, K, r, T, sigma_0=0.2, q=0, tolerance=1e-5, max_iterations=100):
+    sigma = sigma_0
+    for i in range(max_iterations):
+        C_BS = black_scholes(S, K, T, r, sigma, q)
+        
+        vega = calculate_vega(S, K, T, r, sigma, q)
+        
+        if vega == 0:
+            return sigma
+        
+        sigma = sigma - (C_BS - C_market) / vega
+
+        if abs(C_BS - C_market) < tolerance:
+            return sigma
+
+    return sigma
 
 # Testing the function
 if __name__ == "__main__":
@@ -39,6 +41,6 @@ if __name__ == "__main__":
     T = 1       # Time to expiry (1 year)
     r = 0.05    # Risk-free rate (5%)
     sigma = 0.2 # Volatility (20%)
+    C_market = 10
 
-    print("Call Price:", black_scholes(S, K, T, r, sigma, "call"))
-    print("Put Price:", black_scholes(S, K, T, r, sigma, "put"))
+    print(implied_volatility(C_market, S, K, r, T, sigma))
