@@ -1,18 +1,18 @@
-# Black-Scholes Options Calculator
+# Black-Scholes options pricing calculator
 
 This project implements a Black-Scholes calculator for European call and put options.
 
-## Project Structure
+## Project structure
 
 - `options_pricing/`: Contains the Black-Scholes implementation.
 - `tests/`: Contains unit tests for the calculator.
 - `requirements.txt`: Lists required packages.
 - `README.md`: Project overview and instructions.
 
-## Setup Instructions
+## Setup instructions
 
 1. Create a virtual environment:
    ```bash
    python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   source venv/bin/activate
    ```
